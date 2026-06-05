@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyEnglishHub - 你的全能英语学习伴侣</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React & ReactDOM -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <!-- Babel -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- 图表库依赖：Recharts 及其前置依赖 PropTypes -->
+  <script src="https://unpkg.com/prop-types@15.8.1/prop-types.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.12.7/umd/Recharts.js"></script>
+
+  <style>
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body { -webkit-font-smoothing: antialiased; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useMemo } = React;
+
+    // ==========================================
+    // 🎨 图标组件库
+    // ==========================================
+    const Icons = {
+      Book: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>,
+      Calendar: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+      Chart: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" /></svg>,
+      Settings: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+      Sparkles: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>,
+      List: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>,
+      Grid: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>,
+      EyeOff: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>,
+      Trash: () => <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>,
+      Plus: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>,
+      X: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>,
+      Speaker: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M15.536 8.464L12 5H8v14h4l3.536-3.536z" /></svg>,
+      Fire: () => <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path strokeLinecap="round" strokeLinejoin="round" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>,
+      Tag: () => <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
+    };
+
+    // ==========================================
+    // 🧠 核心算法与工具库
+    // ==========================================
+    
+    // 获取无时间的纯日期戳，用于精确计算相差天数
+    const getPureDate = (dateString) => {
+      const d = new Date(dateString);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime();
+    };
+
+    // 格式化日期为 YYYY-MM-DD
+    const formatDateStr = (dateString) => {
+      const d = new Date(dateString);
+      return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    // 艾宾浩斯核心逻辑：判断给定目标日期，有哪些词需要复习
+    // 经典复习周期（天）：0(新学), 1, 2, 4, 7, 15
+    const getWordsForTargetDate = (words, targetDateObj) => {
+      const targetTime = getPureDate(targetDateObj);
+      const intervals = [0, 1, 2, 4, 7, 15]; 
+      
+      return words.filter(w => {
+        const createdTime = getPureDate(w.createdAt);
+        const diffDays = Math.round((targetTime - createdTime) / (1000 * 60 * 60 * 24));
+        // 只有当目标日期 >= 创建日期，且天数差在记忆周期内，才需要复习
+        return diffDays >= 0 && intervals.includes(diffDays);
+      });
+    };
+
+    // 朗读发音助手
+    const speakWord = (text, e) => {
+      if(e) e.stopPropagation();
+      if ('speechSynthesis' in window) {
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'en-US'; 
+          window.speechSynthesis.speak(utterance);
+      }
+    };
+
+    // ==========================================
+    // 📊 打卡页面 - GitHub热力图 (独立模块)
+    // ==========================================
+    const GitHubHeatmap = ({ words }) => {
+      const heatmapData = useMemo(() => {
+        const counts = {};
+        words.forEach(w => {
+          const dateStr = formatDateStr(w.createdAt);
+          counts[dateStr] = (counts[dateStr] || 0) + 1;
+        });
+
+        // 生成过去 119 天的数据 (17周 * 7天)
+        const days = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        for (let i = 119; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - i);
+          const dateStr = formatDateStr(d);
+          days.push({ date: dateStr, count: counts[dateStr] || 0 });
+        }
+        return days;
+      }, [words]);
+
+      // 精确分类：0, 1-10, 11-30, 31-50, 51-99, 100+
+      const getColor = (count) => {
+        if (count === 0) return 'bg-slate-100 border-slate-200';
+        if (count >= 1 && count <= 10) return 'bg-green-200 border-green-300';
+        if (count >= 11 && count <= 30) return 'bg-green-400 border-green-500';
+        if (count >= 31 && count <= 50) return 'bg-green-600 border-green-700';
+        if (count >= 51 && count <= 99) return 'bg-green-800 border-green-900';
+        return 'bg-green-950 border-[#022c22]'; // 100+ 使用极深绿色
+      };
+
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm h-full flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+              <Icons.Fire /> 学习热力图
+            </h3>
+            <span className="text-sm font-medium text-slate-500">累计录入 {words.length} 词</span>
+          </div>
+          
+          <div className="flex-1 flex flex-col justify-center">
+            <div className="grid grid-rows-7 grid-flow-col gap-1.5 overflow-x-auto hide-scrollbar pb-2">
+              {heatmapData.map((d, i) => (
+                <div 
+                  key={i} 
+                  title={`${d.date}: 录入 ${d.count} 个单词`}
+                  className={`w-3.5 h-3.5 rounded-[3px] border ${getColor(d.count)} transition-all hover:scale-125 cursor-pointer`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center justify-end gap-2 mt-4 text-xs text-slate-400 font-medium">
+              <span>0</span>
+              <div className="flex gap-1">
+                <div className="w-3 h-3 rounded-[2px] bg-slate-100" title="0"></div>
+                <div className="w-3 h-3 rounded-[2px] bg-green-200" title="1-10"></div>
+                <div className="w-3 h-3 rounded-[2px] bg-green-400" title="11-30"></div>
+                <div className="w-3 h-3 rounded-[2px] bg-green-600" title="31-50"></div>
+                <div className="w-3 h-3 rounded-[2px] bg-green-800" title="51-99"></div>
+                <div className="w-3 h-3 rounded-[2px] bg-green-950" title="100+"></div>
+              </div>
+              <span>100+</span>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // ==========================================
+    // 📈 打卡页面 - 艾宾浩斯未来7天推演图 (独立模块)
+    // ==========================================
+    const EbbinghausChart = ({ words }) => {
+      const [selectedNode, setSelectedNode] = useState(null);
+
+      // 从全局获取 Recharts 复合图表组件
+      const { ComposedChart, Area, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = window.Recharts || {};
+
+      // 组装未来7天的数据推演
+      const chartData = useMemo(() => {
+        // 艾宾浩斯标准记忆保持率推演 (仅作示意，精确到小数点后3位)
+        const retentions = [100.000, 33.333, 27.800, 25.400, 23.100, 21.100, 19.500, 18.200];
+        const labels = ['今天', '明天', '后天', '3天后', '4天后', '5天后', '6天后', '7天后'];
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        return labels.map((label, index) => {
+          const targetDate = new Date(today);
+          targetDate.setDate(today.getDate() + index);
+
+          // 根据未来的那天，推算出那天需要复习的单词
+          const reviewWords = getWordsForTargetDate(words, targetDate);
+
+          return {
+            name: label,
+            retention: retentions[index],
+            reviewCount: reviewWords.length,
+            wordsList: reviewWords,
+            dateStr: formatDateStr(targetDate)
+          };
+        });
+      }, [words]);
+
+      const handleNodeClick = (data) => {
+        if (data && data.activePayload) {
+          setSelectedNode(data.activePayload[0].payload);
+        }
+      };
+
+      // 自定义 Tooltip 显示三位小数
+      const CustomTooltip = ({ active, payload, label }) => {
+        if (active && payload && payload.length) {
+          return (
+            <div className="bg-white p-4 rounded-xl shadow-lg border border-slate-100">
+              <p className="font-bold text-slate-800 mb-2">{label} <span className="text-xs text-slate-400 font-normal ml-1">({payload[0].payload.dateStr})</span></p>
+              {payload.map(p => (
+                <p key={p.dataKey} className="text-sm font-medium" style={{ color: p.color }}>
+                  {p.name === 'retention' ? '记忆保持率 : ' + Number(p.value).toFixed(3) + '%' : '需复习单词 : ' + p.value + ' 个'}
+                </p>
+              ))}
+            </div>
+          );
+        }
+        return null;
+      };
+
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col h-full">
+          <h3 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+            <Icons.Chart /> 未来7天任务推演
+          </h3>
+          <p className="text-sm text-slate-500 mb-6">直观查看每日复习压力，折线为理论保持率，柱状为需复习词数。</p>
+          
+          <div className="h-64 w-full cursor-pointer">
+            {window.Recharts ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} onClick={handleNodeClick} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorRetention" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#4f46e5" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
+                  {/* 双Y轴：左侧为复习数，右侧为保持率 */}
+                  <YAxis yAxisId="left" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
+                  <YAxis yAxisId="right" orientation="right" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} domain={[0, 100]} hide />
+                  <Tooltip content={<CustomTooltip />} cursor={{fill: '#f8fafc'}} />
+                  
+                  {/* 需复习数量柱状图 */}
+                  <Bar yAxisId="left" dataKey="reviewCount" name="reviewCount" fill="#cbd5e1" radius={[4, 4, 0, 0]} barSize={30} activeBar={{ fill: '#818cf8' }} />
+                  {/* 保持率折线面积图 */}
+                  <Area yAxisId="right" type="monotone" dataKey="retention" name="retention" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#colorRetention)" activeDot={{ r: 6, fill: '#4f46e5', strokeWidth: 0 }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full flex items-center justify-center text-slate-400 bg-slate-50 rounded-xl">图表库加载中...</div>
+            )}
+          </div>
+
+          <div className="mt-6 pt-6 border-t border-slate-100 flex-1 overflow-y-auto">
+            {selectedNode ? (
+              <div>
+                <h4 className="font-bold text-slate-700 mb-3">
+                  {selectedNode.name}的任务明细 <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded text-sm ml-2">{selectedNode.reviewCount} 个待复习</span>
+                </h4>
+                {selectedNode.reviewCount > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedNode.wordsList.map(w => (
+                      <div key={w.id} className="flex justify-between items-center p-3 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-100">
+                        <div>
+                          <span className="font-bold text-slate-800 block">{w.spell}</span>
+                          <span className="text-xs text-slate-500">{w.meaning}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-400 text-center py-4">这一天可以稍微休息一下啦 🎉</p>
+                )}
+              </div>
+            ) : (
+              <div className="h-full flex flex-col items-center justify-center text-slate-400 text-sm opacity-60 py-4">
+                <Icons.List />
+                <span className="mt-2">点击上方图表查看未来每日具体复习任务</span>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    };
+
+
+    // ==========================================
+    // 🗓️ 今日复习 Tab (全新独立页面)
+    // ==========================================
+    const DailyReviewPage = ({ words }) => {
+      // 直接获取今天的复习任务
+      const todayReviewWords = useMemo(() => getWordsForTargetDate(words, new Date()), [words]);
+      const [isMasked, setIsMasked] = useState(true);
+
+      return (
+        <div className="max-w-4xl mx-auto animate-fade-in-up">
+          <div className="flex items-center justify-between mb-8">
+             <div>
+               <h2 className="text-2xl font-bold text-slate-800">今日复习任务</h2>
+               <p className="text-slate-500 text-sm mt-1">系统已根据艾宾浩斯记忆曲线为你挑出今日必须温故的单词。</p>
+             </div>
+             <div className="bg-orange-50 border border-orange-200 text-orange-600 px-4 py-2 rounded-xl font-bold flex items-center gap-2">
+               <Icons.Calendar /> 待复习: {todayReviewWords.length} 词
+             </div>
+          </div>
+
+          {todayReviewWords.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center shadow-sm">
+               <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4"><Icons.Sparkles /></div>
+               <h3 className="text-xl font-bold text-slate-800 mb-2">太棒了！今日任务已清空</h3>
+               <p className="text-slate-500">所有的复习计划都在掌控之中，明天继续保持哦！</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+              <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
+                <span className="text-sm font-bold text-slate-500">点击小喇叭发音，悬浮查看遮挡中文</span>
+                <button onClick={() => setIsMasked(!isMasked)} className={`flex items-center gap-2 text-sm px-4 py-1.5 rounded-full transition-all border ${isMasked ? 'bg-indigo-600 text-white border-indigo-600 shadow-md font-bold' : 'bg-white border-slate-200 text-slate-600 font-bold hover:bg-slate-50'}`}>
+                  <Icons.EyeOff /> {isMasked ? '取消词义遮挡' : '开启遮挡自测'}
+                </button>
+              </div>
+              <div className="divide-y divide-slate-100">
+                {todayReviewWords.map((word, idx) => {
+                  // 计算学习距今天数，用于展示便签
+                  const diffDays = Math.round((getPureDate(new Date()) - getPureDate(word.createdAt)) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={word.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-6 hover:bg-slate-50 transition-colors gap-4">
+                      <div className="flex items-center gap-5 flex-1">
+                        <span className="text-slate-300 font-bold w-6 text-lg">{idx + 1}.</span>
+                        <div className="w-1/3">
+                            <span className="font-black text-xl text-slate-800 block">{word.spell}</span>
+                            {word.phonetic && <span className="text-sm text-slate-400 font-mono mt-0.5 inline-block">{word.phonetic}</span>}
+                        </div>
+                        <div className={`flex-1 transition-all ${isMasked ? 'blur-md hover:blur-none cursor-pointer bg-slate-200 rounded-lg text-transparent hover:text-slate-700 hover:bg-transparent px-3 py-2' : 'text-slate-700'}`}>
+                          <span className="text-sm text-slate-400 mr-2 font-bold italic">{word.pos}</span>
+                          <span className="text-lg">{word.meaning}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-4 sm:ml-4 justify-end">
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${diffDays === 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-orange-100 text-orange-600'}`}>
+                            {diffDays === 0 ? '今天新学' : `${diffDays}天前学习`}
+                          </span>
+                          <button onClick={(e) => speakWord(word.spell, e)} className="text-indigo-500 hover:text-white hover:bg-indigo-500 bg-indigo-50 p-2.5 rounded-full transition-all shadow-sm"><Icons.Speaker /></button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+      )
+    };
+
+    // ==========================================
+    // 👑 应用程序主入口 App
+    // ==========================================
+    function App() {
+      const [activeTab, setActiveTab] = useState('review'); // 默认进今日复习
+      const [words, setWords] = useState([]);
+      const [viewMode, setViewMode] = useState('simple'); 
+      const [isReciteMode, setIsReciteMode] = useState(false);
+      const [notification, setNotification] = useState('');
+      
+      const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+      const [selectedWord, setSelectedWord] = useState(null); 
+      const [inputMode, setInputMode] = useState('single'); 
+      const [isGenerating, setIsGenerating] = useState(false);
+      
+      const [newWord, setNewWord] = useState({ spell: '', phonetic: '', pos: '', meaning: '', enMeaning: '', example: '' });
+      const [batchText, setBatchText] = useState('');
+
+      const [apiConfig, setApiConfig] = useState({ baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat', key: '' });
+      const [inputConfig, setInputConfig] = useState({ ...apiConfig });
+
+      // 初始化模拟数据
+      useEffect(() => {
+        const savedWords = localStorage.getItem('myWordbookData');
+        if (savedWords) {
+          setWords(JSON.parse(savedWords));
+        } else {
+          const today = new Date();
+          const d1 = new Date(today); d1.setDate(d1.getDate() - 1);
+          const d7 = new Date(today); d7.setDate(d7.getDate() - 7);
+          const mockData = [
+            { id: '1', spell: 'robust', meaning: '强壮的，稳固的', phonetic: '/roʊˈbʌst/', pos: 'adj.', example: 'A robust system.', createdAt: today.toISOString() },
+            { id: '2', spell: 'memorize', meaning: '记住，熟记', phonetic: '/ˈmeməraɪz/', pos: 'v.', createdAt: d1.toISOString() },
+            { id: '3', spell: 'curve', meaning: '曲线，弯曲', phonetic: '/kɜːrv/', pos: 'n.', createdAt: d7.toISOString() }
+          ];
+          setWords(mockData);
+        }
+        
+        const savedConfig = localStorage.getItem('universalApiConfig');
+        if (savedConfig) {
+          const parsed = JSON.parse(savedConfig);
+          setApiConfig(parsed);
+          setInputConfig(parsed);
+        }
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('myWordbookData', JSON.stringify(words));
+      }, [words]);
+
+      const showNotification = (msg) => {
+        setNotification(msg);
+        setTimeout(() => setNotification(''), 3000);
+      };
+
+      const handleSaveConfig = () => {
+        setApiConfig(inputConfig);
+        localStorage.setItem('universalApiConfig', JSON.stringify(inputConfig));
+        showNotification('API 引擎配置已保存并生效！');
+      };
+
+      const callUniversalAPI = async (systemPrompt, userPrompt) => {
+        if (!apiConfig.key) {
+           showNotification('未配置 API 密钥！请先在【系统设置】中填写。');
+           setIsAddModalOpen(false); 
+           setActiveTab('settings'); 
+           return null;
+        }
+
+        let endpoint = apiConfig.baseUrl.trim();
+        if(endpoint.endsWith('/')) endpoint = endpoint.slice(0, -1);
+        if(!endpoint.endsWith('/v1/chat/completions')) endpoint += endpoint.endsWith('/v1') ? '/chat/completions' : '/v1/chat/completions';
+
+        const payload = {
+          model: apiConfig.model.trim() || 'gpt-3.5-turbo',
+          messages: [ { role: "system", content: systemPrompt }, { role: "user", content: userPrompt } ],
+          temperature: 0.1
+        };
+        
+        try {
+          const response = await fetch(endpoint, { 
+            method: 'POST', 
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiConfig.key.trim()}` }, 
+            body: JSON.stringify(payload) 
+          });
+          if (!response.ok) throw new Error('API 请求失败，请检查密钥或网络');
+          
+          const data = await response.json();
+          let content = data.choices[0].message.content.replace(/```json\n?/gi, '').replace(/```\n?/g, '').trim();
+          return JSON.parse(content);
+        } catch (error) {
+          throw error;
+        }
+      };
+
+      const generateWordDetails = async () => {
+        if (!newWord.spell.trim()) { showNotification('请先输入英文单词！'); return; }
+        setIsGenerating(true);
+        const sysPrompt = "你是一个专业的英语词典。解析给定的单词，只输出合法JSON，包含：phonetic (音标，如 /həˈloʊ/), pos (词性简写), meaning (中文释义), enMeaning (英译英), example (一个英文例句)。";
+        
+        try {
+          const result = await callUniversalAPI(sysPrompt, `单词：${newWord.spell}`);
+          if(result) {
+            setNewWord(prev => ({ ...prev, phonetic: result.phonetic||'', pos: result.pos||'', meaning: result.meaning||'', enMeaning: result.enMeaning||'', example: result.example||'' }));
+            showNotification('✨ AI 成功填充词意与音标！');
+          }
+        } catch (error) {
+          showNotification(`获取失败：${error.message}`);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      const handleBatchImport = async () => {
+        if (!batchText.trim()) return;
+        setIsGenerating(true);
+        const sysPrompt = "你是一个智能词汇助手。从杂乱文本提取单词，自动纠错，只返回合法的JSON数组，每个对象包含：spell (单词), phonetic (音标), pos (词性), meaning (中文), enMeaning (英译英), example (例句)。";
+        
+        try {
+          const parsedArray = await callUniversalAPI(sysPrompt, `文本：\n${batchText}`);
+          if (Array.isArray(parsedArray)) {
+            const newEntries = parsedArray.map(item => ({ id: Date.now().toString() + Math.random().toString(36).substring(7), ...item, createdAt: new Date().toISOString() }));
+            setWords(prev => [...newEntries, ...prev]);
+            setBatchText(''); 
+            setIsAddModalOpen(false);
+            showNotification(`🎉 成功导入 ${parsedArray.length} 个单词！`);
+          }
+        } catch (error) {
+          showNotification(`解析失败：${error.message}`);
+        } finally {
+          setIsGenerating(false);
+        }
+      };
+
+      const handleAddSingleWord = (e) => {
+        e.preventDefault();
+        if (!newWord.spell.trim()) return;
+        const entry = { id: Date.now().toString(), ...newWord, createdAt: new Date().toISOString() };
+        setWords([entry, ...words]);
+        setNewWord({ spell: '', phonetic: '', pos: '', meaning: '', enMeaning: '', example: '' });
+        setIsAddModalOpen(false);
+        showNotification('已加入单词本！');
+      };
+
+      const handleDelete = (id, e) => {
+          if(e) e.stopPropagation();
+          setWords(words.filter(w => w.id !== id));
+          if(selectedWord && selectedWord.id === id) setSelectedWord(null);
+      };
+
+      // ======== 顶栏 ========
+      const renderHeader = () => (
+        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sticky top-0 z-20 shadow-sm">
+          <div className="text-xl font-black text-slate-800 tracking-tight flex items-center gap-2">
+            MyEnglish<span className="text-indigo-600">Hub</span> 
+            <span className="bg-indigo-100 text-indigo-700 text-xs px-2 py-0.5 rounded-md ml-2 font-bold hidden sm:inline-block">期末必胜版 🚀</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-1.5 bg-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:bg-indigo-700 transition-transform active:scale-95 shadow-md">
+                <Icons.Plus /> 录入新词
+            </button>
+            <div className="w-10 h-10 rounded-full bg-slate-800 text-white flex items-center justify-center font-bold text-sm shadow-md ring-2 ring-white cursor-pointer">Me</div>
+          </div>
+        </header>
+      );
+
+      // ======== 单词详情弹窗 ========
+      const renderWordDetailModal = () => {
+          if(!selectedWord) return null;
+          return (
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4" onClick={() => setSelectedWord(null)}>
+                <div className="bg-[#fdfbf7] w-full max-w-md rounded-2xl p-8 shadow-2xl relative border border-[#e8e4dc]" onClick={e => e.stopPropagation()}>
+                    <button onClick={() => setSelectedWord(null)} className="absolute top-4 right-4 text-slate-400 hover:text-slate-700"><Icons.X /></button>
+                    <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-3xl font-black text-slate-900">{selectedWord.spell}</h3>
+                        <button onClick={() => speakWord(selectedWord.spell)} className="text-indigo-600 hover:bg-indigo-100 p-2 rounded-full transition-colors bg-indigo-50"><Icons.Speaker /></button>
+                    </div>
+                    <div className="flex items-center gap-2 mb-6">
+                      {selectedWord.phonetic && <p className="text-slate-500 font-mono text-sm">{selectedWord.phonetic}</p>}
+                      <span className="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium flex items-center gap-1"><Icons.Tag /> {formatDateStr(selectedWord.createdAt)} 录入</span>
+                    </div>
+                    
+                    <div className="space-y-4 text-base">
+                        <div className="flex items-start gap-3"><span className="shrink-0 font-bold text-slate-400 w-12">中英</span><span className="text-slate-800"><span className="italic mr-2 text-slate-500 font-medium">{selectedWord.pos}</span>{selectedWord.meaning}</span></div>
+                        {selectedWord.enMeaning && <div className="flex items-start gap-3"><span className="shrink-0 font-bold text-slate-400 w-12">英英</span><span className="text-slate-700 font-serif leading-relaxed">{selectedWord.enMeaning}</span></div>}
+                        {selectedWord.example && <div className="flex items-start gap-3 pt-4 border-t border-[#e8e4dc]"><span className="shrink-0 font-bold text-slate-400 w-12">例句</span><span className="text-slate-600 italic">"{selectedWord.example}"</span></div>}
+                    </div>
+                </div>
+            </div>
+          )
+      }
+
+      return (
+        <div className="min-h-screen bg-slate-50 font-sans flex flex-col relative">
+          
+          {/* 添加单词弹窗 */}
+          {isAddModalOpen && (
+            <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col">
+                <div className="flex justify-between items-center px-6 py-4 border-b border-slate-100 bg-slate-50">
+                  <div className="flex bg-slate-200/50 p-1 rounded-lg">
+                     <button onClick={() => setInputMode('single')} className={`px-4 py-1.5 rounded-md text-sm font-bold ${inputMode === 'single' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}>单个录入</button>
+                     <button onClick={() => setInputMode('batch')} className={`px-4 py-1.5 rounded-md text-sm font-bold flex items-center gap-1 ${inputMode === 'batch' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500'}`}><Icons.Sparkles /> 智能批量</button>
+                  </div>
+                  <button onClick={() => setIsAddModalOpen(false)} className="text-slate-400 hover:text-slate-600"><Icons.X /></button>
+                </div>
+                <div className="p-6">
+                  {inputMode === 'single' ? (
+                    <form onSubmit={handleAddSingleWord} className="space-y-4">
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="输入单词..." value={newWord.spell} onChange={e => setNewWord({...newWord, spell: e.target.value})} className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 text-lg font-bold" />
+                        <button type="button" onClick={generateWordDetails} disabled={isGenerating} className="bg-indigo-50 text-indigo-600 px-4 rounded-xl hover:bg-indigo-100 font-bold flex items-center gap-1">{isGenerating ? '获取中...' : 'AI 解析'}</button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-3">
+                        <input type="text" placeholder="音标 (如 /kæt/)" value={newWord.phonetic} onChange={e => setNewWord({...newWord, phonetic: e.target.value})} className="px-4 py-2 rounded-xl border border-slate-200" />
+                        <input type="text" placeholder="词性 (如 n.)" value={newWord.pos} onChange={e => setNewWord({...newWord, pos: e.target.value})} className="px-4 py-2 rounded-xl border border-slate-200" />
+                        <input type="text" placeholder="中文释义" value={newWord.meaning} onChange={e => setNewWord({...newWord, meaning: e.target.value})} className="px-4 py-2 rounded-xl border border-slate-200" />
+                      </div>
+                      <input type="text" placeholder="英译英" value={newWord.enMeaning} onChange={e => setNewWord({...newWord, enMeaning: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-200" />
+                      <textarea placeholder="例句" value={newWord.example} onChange={e => setNewWord({...newWord, example: e.target.value})} className="w-full px-4 py-2 rounded-xl border border-slate-200" />
+                      <button type="submit" className="w-full bg-slate-800 text-white py-3 rounded-xl font-bold hover:bg-slate-900 transition-colors">保存单词</button>
+                    </form>
+                  ) : (
+                    <div className="space-y-4">
+                      <textarea placeholder="粘贴包含生词的文本，哪怕是一段长篇大论，AI 也会自动提取单词并纠正拼写..." value={batchText} onChange={e => setBatchText(e.target.value)} rows="5" className="w-full p-4 rounded-xl border border-slate-200 focus:ring-2 focus:ring-indigo-500 resize-none"></textarea>
+                      <button onClick={handleBatchImport} disabled={isGenerating} className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold flex justify-center items-center gap-2 hover:bg-indigo-700 transition-colors">{isGenerating ? 'AI运转中...' : '一键提取并导入'}</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {renderWordDetailModal()}
+          {notification && <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-slate-800 text-white px-6 py-3 rounded-full shadow-lg text-sm font-bold z-[60]">{notification}</div>}
+          
+          {renderHeader()}
+
+          <div className="flex flex-1 overflow-hidden">
+            {/* 侧边栏 */}
+            <aside className="w-20 md:w-56 bg-white border-r border-slate-200 h-[calc(100vh-4rem)] flex flex-col py-6 sticky top-16">
+              <nav className="flex-1 px-3 space-y-2">
+                {[
+                  { id: 'wordbook', icon: Icons.Book, label: '单词库' }, 
+                  { id: 'review', icon: Icons.Calendar, label: '今日复习' }, 
+                  { id: 'checkin', icon: Icons.Chart, label: '打卡分析' }, 
+                  { id: 'settings', icon: Icons.Settings, label: '系统设置' }
+                ].map(item => (
+                  <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-3 py-3 md:px-4 rounded-xl font-bold transition-all ${activeTab === item.id ? 'bg-indigo-50 text-indigo-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-800'}`}>
+                    <div className={activeTab === item.id ? 'text-indigo-600' : 'text-slate-400'}><item.icon /></div><span className="hidden md:block">{item.label}</span>
+                  </button>
+                ))}
+              </nav>
+            </aside>
+
+            {/* 主内容区 */}
+            <main className="flex-1 overflow-y-auto p-6 md:p-8">
+              
+              {/* === 1. 单词本页面 === */}
+              {activeTab === 'wordbook' && (
+                <div className="max-w-5xl mx-auto animate-fade-in-up">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+                     <h2 className="text-2xl font-bold text-slate-800">所有单词库 ({words.length})</h2>
+                     <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 shadow-sm">
+                          <button onClick={() => setViewMode('simple')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold transition-colors ${viewMode === 'simple' ? 'bg-slate-100 text-slate-800' : 'text-slate-400'}`}><Icons.List /> 简法</button>
+                          <button onClick={() => setViewMode('complete')} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-bold transition-colors ${viewMode === 'complete' ? 'bg-slate-100 text-slate-800' : 'text-slate-400'}`}><Icons.Grid /> 完整</button>
+                        </div>
+                     </div>
+                  </div>
+                  {viewMode === 'simple' && (
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                      <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex justify-between items-center">
+                        <span className="text-sm font-bold text-slate-500">点击单词查看详情与发音</span>
+                        <button onClick={() => setIsReciteMode(!isReciteMode)} className={`flex items-center gap-2 text-sm px-4 py-1.5 rounded-full transition-all border ${isReciteMode ? 'bg-indigo-600 text-white border-indigo-600 shadow-md font-bold' : 'bg-white border-slate-200 text-slate-600 font-bold hover:bg-slate-50'}`}><Icons.EyeOff /> {isReciteMode ? '退出背诵' : '开启背诵遮挡'}</button>
+                      </div>
+                      <div className="divide-y divide-slate-100">
+                        {words.map((word, idx) => (
+                          <div key={word.id} onClick={() => !isReciteMode && setSelectedWord(word)} className={`flex items-center justify-between p-4 hover:bg-slate-50 group transition-colors ${isReciteMode ? '' : 'cursor-pointer'}`}>
+                            <div className="flex items-center gap-4 flex-1">
+                              <span className="text-slate-300 font-medium w-6 text-sm">{idx + 1}.</span>
+                              <div className="flex items-center gap-2 w-1/3">
+                                  <span className="font-bold text-lg text-slate-800">{word.spell}</span>
+                                  {/* 给输入单词表精简部分加上日期分类便签 */}
+                                  <span className="bg-slate-100 text-slate-400 border border-slate-200 px-2 py-0.5 rounded text-[10px] font-bold hidden md:inline-block flex items-center gap-1"><Icons.Tag />{formatDateStr(word.createdAt)}</span>
+                              </div>
+                              <div className={`flex-1 transition-all ${isReciteMode ? 'blur-md hover:blur-none cursor-pointer bg-slate-200 rounded-md text-transparent hover:text-slate-700 hover:bg-transparent px-2 py-1' : 'text-slate-600'}`}>
+                                <span className="text-xs text-slate-400 mr-2 font-medium">{word.pos}</span>{word.meaning}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 ml-4">
+                                <button onClick={(e) => speakWord(word.spell, e)} className="text-indigo-400 hover:text-indigo-600 opacity-0 group-hover:opacity-100 p-2 transition-opacity"><Icons.Speaker /></button>
+                                <button onClick={(e) => handleDelete(word.id, e)} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-2 transition-opacity"><Icons.Trash /></button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {viewMode === 'complete' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 pb-20">
+                      {words.map(word => (
+                        <div key={word.id} className="bg-[#fdfbf7] rounded-xl border border-[#e8e4dc] p-6 shadow-sm hover:shadow-md relative group flex flex-col transition-shadow">
+                          <button onClick={(e) => handleDelete(word.id, e)} className="absolute top-4 right-4 text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"><Icons.Trash /></button>
+                          <div className="mb-3 flex items-start justify-between">
+                              <div>
+                                  <h3 className="text-2xl font-black text-slate-900 tracking-tight">{word.spell}</h3>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {word.phonetic && <p className="text-slate-500 font-mono text-sm">{word.phonetic}</p>}
+                                    <span className="bg-[#f3efea] text-slate-400 px-1.5 py-0.5 rounded text-[10px] font-bold border border-[#e8e4dc]">{formatDateStr(word.createdAt)}</span>
+                                  </div>
+                              </div>
+                              <button onClick={(e) => speakWord(word.spell, e)} className="text-indigo-500 hover:text-indigo-700 bg-indigo-50 p-2.5 rounded-full transition-colors"><Icons.Speaker /></button>
+                          </div>
+                          <div className="space-y-3 flex-1 text-sm mt-2">
+                            <div className="flex items-start gap-2"><span className="shrink-0 font-bold text-slate-400 w-12">中英</span><span className="text-slate-800"><span className="italic mr-1 text-slate-500 font-medium">{word.pos}</span>{word.meaning}</span></div>
+                            {word.enMeaning && <div className="flex items-start gap-2"><span className="shrink-0 font-bold text-slate-400 w-12">英英</span><span className="text-slate-700 font-serif leading-relaxed">{word.enMeaning}</span></div>}
+                            {word.example && <div className="flex items-start gap-2 pt-3 mt-1 border-t border-[#e8e4dc]/50"><span className="shrink-0 font-bold text-slate-400 w-12">例句</span><span className="text-slate-600 italic">"{word.example}"</span></div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* === 2. 今日复习页面 === */}
+              {activeTab === 'review' && <DailyReviewPage words={words} />}
+
+              {/* === 3. 打卡分析页面 === */}
+              {activeTab === 'checkin' && (
+                <div className="max-w-6xl mx-auto animate-fade-in-up space-y-6">
+                  <div className="mb-2">
+                    <h2 className="text-2xl font-bold text-slate-800">学习打卡与可视化</h2>
+                    <p className="text-slate-500 text-sm mt-1">掌控你的遗忘曲线，见证每一天的积累。</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-2 min-h-[500px]">
+                      <EbbinghausChart words={words} />
+                    </div>
+                    <div className="lg:col-span-1 min-h-[300px]">
+                      <GitHubHeatmap words={words} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* === 4. 系统设置页面 === */}
+              {activeTab === 'settings' && (
+                <div className="max-w-2xl mx-auto mt-8 bg-white p-8 rounded-2xl border border-slate-200 shadow-sm animate-fade-in-up">
+                  <h2 className="text-xl font-bold mb-6 text-slate-800">API 引擎设置</h2>
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">API 接口地址 (Base URL)</label>
+                      <input type="text" value={inputConfig.baseUrl} onChange={e => setInputConfig({...inputConfig, baseUrl: e.target.value})} placeholder="例如：https://api.deepseek.com" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">模型名称 (Model)</label>
+                      <input type="text" value={inputConfig.model} onChange={e => setInputConfig({...inputConfig, model: e.target.value})} placeholder="例如：deepseek-chat" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-bold text-slate-700 mb-1">API 密钥 (API Key)</label>
+                      <input type="password" value={inputConfig.key} onChange={e => setInputConfig({...inputConfig, key: e.target.value})} placeholder="输入你的 Bearer Token" className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm" />
+                    </div>
+                    <button onClick={handleSaveConfig} className="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors w-full sm:w-auto">保存并应用</button>
+                  </div>
+                </div>
+              )}
+            </main>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
